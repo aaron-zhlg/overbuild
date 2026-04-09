@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "overbuild"
+version = "0.1.0"
+description = "Runtime import-hook instrumentation for Python cold code detection"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+  {name = "Ligao Zhang"}
+]
+
+[tool.setuptools]
+packages = ["overbuild"]
