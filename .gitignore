@@ -31,4 +31,4 @@ htmlcov/
 .vscode/
 
 # Runtime report outputs
-overbuild_report.json
+overbuild_reports/

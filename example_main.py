@@ -2,7 +2,7 @@ from overbuild import ImportHookConfig, install_import_hook
 
 install_import_hook(
     config=ImportHookConfig(
-        output_path="overbuild_report.json", # optional custom report path
+        output_dir="overbuild_reports", # optional custom report dir
         report_interval_seconds=10 * 60, # default: 10 minutes
     )
 )

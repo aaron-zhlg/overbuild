@@ -11,7 +11,7 @@ This MVP installs an import hook from the top of your entry file, instruments pr
 - count:
   - function entries
   - `if` true/false branch hits
-- update `overbuild_report.json` periodically (default every 10 minutes) and write final report at exit
+- write a new timestamped report JSON periodically (default every 10 minutes) and at exit
 
 ## Quick start
 
@@ -22,9 +22,10 @@ from overbuild import ImportHookConfig, install_import_hook
 
 install_import_hook(
     config=ImportHookConfig(
-        output_path=None,                # optional, e.g. "/tmp/my_report.json"
-                                         # when None -> ./overbuild_report.json
+        output_dir=None,                 # optional, e.g. "/tmp/overbuild_reports"
+                                         # when None -> ./overbuild_reports
         report_interval_seconds=10 * 60, # default: 10 minutes
+        save_to_local=True,              # default: True
     )
 )
 ```
@@ -47,7 +48,7 @@ if __name__ == "__main__":
 
 ## Output
 
-Example `overbuild_report.json`:
+Example report file `overbuild_reports/overbuild_report_1712961415123.json`:
 
 ```json
 {

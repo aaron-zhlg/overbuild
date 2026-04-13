@@ -17,7 +17,7 @@ _IS_INITIALIZED = False
 
 @dataclass(frozen=True)
 class ImportHookConfig:
-    output_path: str | os.PathLike[str] | None = None
+    output_dir: str | os.PathLike[str] | None = None
     report_interval_seconds: float = 10 * 60
     save_to_local: bool = True
 
@@ -43,7 +43,7 @@ def install_import_hook(
 
     cfg = config or ImportHookConfig()
     configure_reporting(
-        output_path=cfg.output_path,
+        output_dir=cfg.output_dir,
         flush_interval_seconds=cfg.report_interval_seconds,
         save_to_local=cfg.save_to_local,
     )

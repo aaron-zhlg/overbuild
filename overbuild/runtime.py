@@ -5,14 +5,16 @@ import json
 import os
 import threading
 from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
 
 _COUNTS: Counter[str] = Counter()
 _LOCK = threading.Lock()
 _CONFIG_LOCK = threading.Lock()
-_DEFAULT_REPORT_FILENAME = "overbuild_report.json"
+_DEFAULT_REPORT_DIRNAME = "overbuild_reports"
+_REPORT_FILENAME_PREFIX = "overbuild_report_"
 _DEFAULT_FLUSH_INTERVAL_SECONDS = 10 * 60
-_REPORT_PATH: Path = (Path.cwd() / _DEFAULT_REPORT_FILENAME).resolve()
+_REPORT_DIR: Path = (Path.cwd() / _DEFAULT_REPORT_DIRNAME).resolve()
 _FLUSH_INTERVAL_SECONDS = float(_DEFAULT_FLUSH_INTERVAL_SECONDS)
 _SAVE_TO_LOCAL = True
 _REPORTER_STOP = threading.Event()
@@ -30,16 +32,16 @@ def snapshot() -> dict[str, int]:
 
 
 def configure_reporting(
-    output_path: str | os.PathLike[str] | None = None,
+    output_dir: str | os.PathLike[str] | None = None,
     flush_interval_seconds: float | None = None,
     save_to_local: bool = True,
 ) -> None:
-    global _REPORT_PATH, _FLUSH_INTERVAL_SECONDS, _SAVE_TO_LOCAL
+    global _REPORT_DIR, _FLUSH_INTERVAL_SECONDS, _SAVE_TO_LOCAL
 
-    if output_path is not None:
-        resolved_report_path = Path(output_path).resolve()
+    if output_dir is not None:
+        resolved_report_dir = Path(output_dir).resolve()
     else:
-        resolved_report_path = (Path(os.getcwd()) / _DEFAULT_REPORT_FILENAME).resolve()
+        resolved_report_dir = (Path(os.getcwd()) / _DEFAULT_REPORT_DIRNAME).resolve()
 
     interval = (
         float(flush_interval_seconds)
@@ -50,7 +52,7 @@ def configure_reporting(
         raise ValueError("flush_interval_seconds must be > 0")
 
     with _CONFIG_LOCK:
-        _REPORT_PATH = resolved_report_path
+        _REPORT_DIR = resolved_report_dir
         _FLUSH_INTERVAL_SECONDS = interval
         _SAVE_TO_LOCAL = save_to_local
         if _SAVE_TO_LOCAL:
@@ -86,12 +88,18 @@ def _write_report(announce: bool) -> None:
     with _CONFIG_LOCK:
         if not _SAVE_TO_LOCAL:
             return
-        path = _REPORT_PATH
-    path.parent.mkdir(parents=True, exist_ok=True)
+        report_dir = _REPORT_DIR
+    report_dir.mkdir(parents=True, exist_ok=True)
+    path = report_dir / _build_report_filename()
     with path.open("w", encoding="utf-8") as f:
         json.dump(snapshot(), f, indent=2, sort_keys=True, ensure_ascii=False)
     if announce:
         print(f"[overbuild] wrote report to {path}")
+
+
+def _build_report_filename() -> str:
+    timestamp = int(datetime.now(timezone.utc).timestamp() * 1000)
+    return f"{_REPORT_FILENAME_PREFIX}{timestamp}.json"
 
 
 @atexit.register
