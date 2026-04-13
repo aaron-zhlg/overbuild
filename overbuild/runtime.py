@@ -17,6 +17,7 @@ _DEFAULT_FLUSH_INTERVAL_SECONDS = 10 * 60
 _REPORT_DIR: Path = (Path.cwd() / _DEFAULT_REPORT_DIRNAME).resolve()
 _FLUSH_INTERVAL_SECONDS = float(_DEFAULT_FLUSH_INTERVAL_SECONDS)
 _SAVE_TO_LOCAL = True
+_API_KEY: str | None = None
 _REPORTER_STOP = threading.Event()
 _REPORTER_THREAD: threading.Thread | None = None
 
@@ -35,8 +36,9 @@ def configure_reporting(
     output_dir: str | os.PathLike[str] | None = None,
     flush_interval_seconds: float | None = None,
     save_to_local: bool = True,
+    api_key: str | None = None,
 ) -> None:
-    global _REPORT_DIR, _FLUSH_INTERVAL_SECONDS, _SAVE_TO_LOCAL
+    global _REPORT_DIR, _FLUSH_INTERVAL_SECONDS, _SAVE_TO_LOCAL, _API_KEY
 
     if output_dir is not None:
         resolved_report_dir = Path(output_dir).resolve()
@@ -55,7 +57,8 @@ def configure_reporting(
         _REPORT_DIR = resolved_report_dir
         _FLUSH_INTERVAL_SECONDS = interval
         _SAVE_TO_LOCAL = save_to_local
-        if _SAVE_TO_LOCAL:
+        _API_KEY = api_key
+        if _SAVE_TO_LOCAL or _API_KEY:
             _start_reporter_locked()
         else:
             _REPORTER_STOP.set()
@@ -86,20 +89,34 @@ def _reporter_loop() -> None:
 
 def _write_report(announce: bool) -> None:
     with _CONFIG_LOCK:
-        if not _SAVE_TO_LOCAL:
-            return
+        save_to_local = _SAVE_TO_LOCAL
+        api_key = _API_KEY
         report_dir = _REPORT_DIR
-    report_dir.mkdir(parents=True, exist_ok=True)
-    path = report_dir / _build_report_filename()
-    with path.open("w", encoding="utf-8") as f:
-        json.dump(snapshot(), f, indent=2, sort_keys=True, ensure_ascii=False)
-    if announce:
-        print(f"[overbuild] wrote report to {path}")
+    if not save_to_local and not api_key:
+        return
+
+    report = snapshot()
+
+    if save_to_local:
+        report_dir.mkdir(parents=True, exist_ok=True)
+        path = report_dir / _build_report_filename()
+        with path.open("w", encoding="utf-8") as f:
+            json.dump(report, f, indent=2, sort_keys=True, ensure_ascii=False)
+        if announce:
+            print(f"[overbuild] wrote report to {path}")
+
+    if api_key:
+        _report_to_api(api_key=api_key, report=report)
 
 
 def _build_report_filename() -> str:
     timestamp = int(datetime.now(timezone.utc).timestamp() * 1000)
     return f"{_REPORT_FILENAME_PREFIX}{timestamp}.json"
+
+
+def _report_to_api(api_key: str, report: dict[str, int]) -> None:
+    # Reserved API reporting hook. Intentionally left unimplemented for now.
+    _ = (api_key, report)
 
 
 @atexit.register

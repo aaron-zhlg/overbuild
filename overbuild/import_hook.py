@@ -20,6 +20,7 @@ class ImportHookConfig:
     output_dir: str | os.PathLike[str] | None = None
     report_interval_seconds: float = 10 * 60
     save_to_local: bool = True
+    api_key: str | None = None
 
 
 def install_import_hook(
@@ -46,6 +47,7 @@ def install_import_hook(
         output_dir=cfg.output_dir,
         flush_interval_seconds=cfg.report_interval_seconds,
         save_to_local=cfg.save_to_local,
+        api_key=cfg.api_key,
     )
 
     root = os.path.abspath(project_root or os.getcwd())

@@ -26,6 +26,7 @@ install_import_hook(
                                          # when None -> ./overbuild_reports
         report_interval_seconds=10 * 60, # default: 10 minutes
         save_to_local=True,              # default: True
+        api_key=None,                    # optional API reporting key (reserved)
     )
 )
 ```
