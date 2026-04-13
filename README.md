@@ -11,15 +11,22 @@ This MVP installs an import hook from the top of your entry file, instruments pr
 - count:
   - function entries
   - `if` true/false branch hits
-- write a report at exit to `overbuild_report.json`
+- update `overbuild_report.json` periodically (default every 10 minutes) and write final report at exit
 
 ## Quick start
 
 Put this at the very top of your entry file:
 
 ```python
-from overbuild import install_import_hook
-install_import_hook()
+from overbuild import ImportHookConfig, install_import_hook
+
+install_import_hook(
+    config=ImportHookConfig(
+        output_path=None,                # optional, e.g. "/tmp/my_report.json"
+                                         # when None -> ./overbuild_report.json
+        report_interval_seconds=10 * 60, # default: 10 minutes
+    )
+)
 ```
 
 Then run your app normally.

@@ -4,12 +4,48 @@ import ast
 import importlib.abc
 import os
 import sys
+import threading
+import warnings
+from dataclasses import dataclass
 from importlib.machinery import PathFinder
 
 from .instrumentor import Instrumentor
 
+_INIT_LOCK = threading.Lock()
+_IS_INITIALIZED = False
 
-def install_import_hook(project_root: str | None = None) -> None:
+
+@dataclass(frozen=True)
+class ImportHookConfig:
+    output_path: str | os.PathLike[str] | None = None
+    report_interval_seconds: float = 10 * 60
+
+
+def install_import_hook(
+    project_root: str | None = None,
+    config: ImportHookConfig | None = None,
+) -> None:
+    global _IS_INITIALIZED
+    from .runtime import configure_reporting
+
+    with _INIT_LOCK:
+        if _IS_INITIALIZED:
+            message = (
+                "install_import_hook() has already been initialized once; "
+                "subsequent calls are ignored."
+            )
+            warnings.warn(message, RuntimeWarning, stacklevel=2)
+            print(f"[overbuild] ERROR: {message}", file=sys.stderr)
+            return
+
+        _IS_INITIALIZED = True
+
+    cfg = config or ImportHookConfig()
+    configure_reporting(
+        output_path=cfg.output_path,
+        flush_interval_seconds=cfg.report_interval_seconds,
+    )
+
     root = os.path.abspath(project_root or os.getcwd())
     for finder in sys.meta_path:
         if isinstance(finder, InstrumentFinder) and finder.project_root == root:
