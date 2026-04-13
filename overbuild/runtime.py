@@ -14,6 +14,7 @@ _DEFAULT_REPORT_FILENAME = "overbuild_report.json"
 _DEFAULT_FLUSH_INTERVAL_SECONDS = 10 * 60
 _REPORT_PATH: Path = (Path.cwd() / _DEFAULT_REPORT_FILENAME).resolve()
 _FLUSH_INTERVAL_SECONDS = float(_DEFAULT_FLUSH_INTERVAL_SECONDS)
+_SAVE_TO_LOCAL = True
 _REPORTER_STOP = threading.Event()
 _REPORTER_THREAD: threading.Thread | None = None
 
@@ -31,8 +32,9 @@ def snapshot() -> dict[str, int]:
 def configure_reporting(
     output_path: str | os.PathLike[str] | None = None,
     flush_interval_seconds: float | None = None,
+    save_to_local: bool = True,
 ) -> None:
-    global _REPORT_PATH, _FLUSH_INTERVAL_SECONDS
+    global _REPORT_PATH, _FLUSH_INTERVAL_SECONDS, _SAVE_TO_LOCAL
 
     if output_path is not None:
         resolved_report_path = Path(output_path).resolve()
@@ -50,7 +52,11 @@ def configure_reporting(
     with _CONFIG_LOCK:
         _REPORT_PATH = resolved_report_path
         _FLUSH_INTERVAL_SECONDS = interval
-        _start_reporter_locked()
+        _SAVE_TO_LOCAL = save_to_local
+        if _SAVE_TO_LOCAL:
+            _start_reporter_locked()
+        else:
+            _REPORTER_STOP.set()
 
 
 def _start_reporter_locked() -> None:
@@ -78,6 +84,8 @@ def _reporter_loop() -> None:
 
 def _write_report(announce: bool) -> None:
     with _CONFIG_LOCK:
+        if not _SAVE_TO_LOCAL:
+            return
         path = _REPORT_PATH
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as f:

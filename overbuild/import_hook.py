@@ -19,6 +19,7 @@ _IS_INITIALIZED = False
 class ImportHookConfig:
     output_path: str | os.PathLike[str] | None = None
     report_interval_seconds: float = 10 * 60
+    save_to_local: bool = True
 
 
 def install_import_hook(
@@ -44,6 +45,7 @@ def install_import_hook(
     configure_reporting(
         output_path=cfg.output_path,
         flush_interval_seconds=cfg.report_interval_seconds,
+        save_to_local=cfg.save_to_local,
     )
 
     root = os.path.abspath(project_root or os.getcwd())
