@@ -20,6 +20,7 @@ class ImportHookConfig:
     output_dir: str | os.PathLike[str] | None = None
     report_interval_seconds: float = 10 * 60
     save_to_local: bool = True
+    # Manage API keys at https://www.overbuild.dev/dashboard
     api_key: str | None = None
 
 
